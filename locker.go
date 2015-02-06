@@ -38,7 +38,7 @@ func stop(hostsFile *os.File) []string {
 
 	sr := strings.Join(result, "\n")
 	if sr == shd {
-		return lines
+		return result
 	}
 
 	err = hostsFile.Truncate(0)
@@ -56,7 +56,7 @@ func stop(hostsFile *os.File) []string {
 		panic(err)
 	}
 
-	return lines
+	return result
 }
 
 func start(conf []byte, hLines []string, hostsFile *os.File) {
