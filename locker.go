@@ -16,7 +16,7 @@ const (
 	EntD       = 30
 )
 
-func stop(hostsFile *os.File) {
+func stop(hostsFile *os.File) []string {
 	hostsdata, err := ioutil.ReadAll(hostsFile)
 	if err != nil {
 		panic(err)
@@ -27,6 +27,10 @@ func stop(hostsFile *os.File) {
 	lines := strings.Split(shd, "\n")
 	result := []string{}
 	for _, l := range lines {
+		if strings.HasPrefix(l, KeyComment) {
+			result = append(result, l[len(KeyComment):])
+			continue
+		}
 		if !strings.HasSuffix(l, KeyComment) {
 			result = append(result, l)
 		}
@@ -34,7 +38,7 @@ func stop(hostsFile *os.File) {
 
 	sr := strings.Join(result, "\n")
 	if sr == shd {
-		return
+		return lines
 	}
 
 	err = hostsFile.Truncate(0)
@@ -51,10 +55,44 @@ func stop(hostsFile *os.File) {
 	if err != nil {
 		panic(err)
 	}
+
+	return lines
 }
 
-func start(conf []byte, hostsFile *os.File) {
+func start(conf []byte, hLines []string, hostsFile *os.File) {
 	confLines := strings.Split(string(conf), "\n")
+	m := map[string]bool{}
+	for _, l := range confLines {
+		m[strings.TrimSpace(l)] = true
+	}
+
+	lines := hLines
+	for i := range lines {
+		spl := strings.Split(lines[i], " ")
+		if len(spl) > 1 {
+			nspl := strings.TrimSpace(spl[1])
+			println(nspl)
+			if nspl != "" && m[nspl] {
+				lines[i] = KeyComment + lines[i]
+			}
+		}
+	}
+
+	err := hostsFile.Truncate(0)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = hostsFile.Seek(0, 0)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = hostsFile.WriteString(strings.Join(lines, "\n"))
+	if err != nil {
+		panic(err)
+	}
+
 	for i, _ := range confLines {
 		if strings.TrimSpace(confLines[i]) == "" {
 			continue
@@ -63,7 +101,7 @@ func start(conf []byte, hostsFile *os.File) {
 		confLines[i] = "0.0.0.0 " + confLines[i] + KeyComment
 	}
 
-	_, err := hostsFile.Seek(0, 2)
+	_, err = hostsFile.Seek(0, 2)
 	if err != nil {
 		panic(err)
 	}
@@ -89,18 +127,18 @@ func main() {
 
 	switch flag.Arg(0) {
 	case "iwannafckngentertainpleaseletmesir":
-		stop(hostsFile)
+		hLines := stop(hostsFile)
 		fmt.Printf("You got %v Minutes\n", EntD)
 		time.Sleep(EntD * time.Minute)
-		start(conf, hostsFile)
+		start(conf, hLines, hostsFile)
 	case "tempoaccs":
-		stop(hostsFile)
+		hLines := stop(hostsFile)
 		fmt.Printf("You got %v Seconds\n", Secs)
 		time.Sleep(Secs * time.Second)
-		start(conf, hostsFile)
+		start(conf, hLines, hostsFile)
 	case "":
-		stop(hostsFile)
-		start(conf, hostsFile)
+		hLines := stop(hostsFile)
+		start(conf, hLines, hostsFile)
 	default:
 		fmt.Printf("What are you smoking?\n")
 	}
