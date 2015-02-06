@@ -8,6 +8,6 @@ Commands:
 * 42 seconds unlock
 
     sudo locker tempoaccs
-* 15 minutes unlock
+* 30 minutes unlock
 
     sudo locker iwannafckngentertainpleaseletmesir
