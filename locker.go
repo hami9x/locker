@@ -71,7 +71,6 @@ func start(conf []byte, hLines []string, hostsFile *os.File) {
 		spl := strings.Split(lines[i], " ")
 		if len(spl) > 1 {
 			nspl := strings.TrimSpace(spl[1])
-			println(nspl)
 			if nspl != "" && m[nspl] {
 				lines[i] = KeyComment + lines[i]
 			}
